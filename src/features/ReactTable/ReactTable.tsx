@@ -1,6 +1,6 @@
 import { matchSorter } from "match-sorter";
 import React, { useMemo } from "react";
-import { useTable, useFilters, useGlobalFilter, useAsyncDebounce, useSortBy } from "react-table";
+import { useTable, useFilters, useGlobalFilter, useAsyncDebounce, useSortBy, usePagination } from "react-table";
 import styled from "styled-components";
 import MaUTable from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
@@ -26,6 +26,7 @@ const Styles = styled.div`
   padding: 1rem;
   display: flex;
   justify-content: center;
+  flex-direction: column;
 
   table {
     border-spacing: 0;
@@ -305,7 +306,6 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
     getTableProps,
     getTableBodyProps,
     headerGroups,
-    rows,
     prepareRow,
     state,
     visibleColumns,
@@ -313,6 +313,24 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
     preGlobalFilteredRows,
     // @ts-ignore
     setGlobalFilter,
+    // @ts-ignore
+    page,
+    // @ts-ignore
+    canPreviousPage,
+    // @ts-ignore
+    canNextPage,
+    // @ts-ignore
+    pageOptions,
+    // @ts-ignore
+    pageCount,
+    // @ts-ignore
+    gotoPage,
+    // @ts-ignore
+    nextPage,
+    // @ts-ignore
+    previousPage,
+    // @ts-ignore
+    setPageSize,
   } = useTable(
     {
       columns,
@@ -324,10 +342,58 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
     useFilters,
     useGlobalFilter,
     useSortBy,
+    usePagination,
   );
 
   return (
     <Styles>
+      <div className='pagination' style={{ marginBottom: "16px" }}>
+        <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
+          {"<<"}
+        </button>{" "}
+        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+          {"<"}
+        </button>{" "}
+        <button onClick={() => nextPage()} disabled={!canNextPage}>
+          {">"}
+        </button>{" "}
+        <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
+          {">>"}
+        </button>{" "}
+        <span>
+          Page{" "}
+          <strong>
+            {/* @ts-ignore */}
+            {state.pageIndex + 1} of {pageOptions.length}
+          </strong>{" "}
+        </span>
+        <span>
+          | Go to page:{" "}
+          <input
+            type='number'
+            // @ts-ignore
+            defaultValue={state.pageIndex + 1}
+            onChange={(e) => {
+              const page = e.target.value ? Number(e.target.value) - 1 : 0;
+              gotoPage(page);
+            }}
+            style={{ width: "100px" }}
+          />
+        </span>{" "}
+        <select
+          // @ts-ignore
+          value={state.pageSize}
+          onChange={(e) => {
+            setPageSize(Number(e.target.value));
+          }}
+        >
+          {[10, 30, 50].map((pageSize) => (
+            <option key={pageSize} value={pageSize}>
+              Show {pageSize}
+            </option>
+          ))}
+        </select>
+      </div>
       <MaUTable {...getTableProps()}>
         <TableHead>
           {headerGroups.map((headerGroup) => (
@@ -370,7 +436,7 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
         <TableBody {...getTableBodyProps()}>
           {
             // Loop over the table rows
-            rows.map((row) => {
+            page.map((row) => {
               // Prepare the row for display
               prepareRow(row);
               return (
@@ -396,6 +462,10 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
           }
         </TableBody>
       </MaUTable>
+      {/* 
+        Pagination can be built however you'd like. 
+        This is just a very basic UI implementation:
+      */}
     </Styles>
   );
 };
