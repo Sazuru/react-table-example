@@ -15,6 +15,7 @@ export const ReactTableContainer = () => {
     { retry: false, refetchOnWindowFocus: false },
   );
 
+  console.log(`🚀 ~ file: ReactTableContainer.tsx ~ line 13 ~ ReactTableContainer ~ data`, data);
   return (
     <div>
       {error && <div>Something went wrong ...</div>}
