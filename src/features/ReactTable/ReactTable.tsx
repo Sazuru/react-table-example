@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { useSortBy, useTable } from "react-table";
+import { useTable, useFilters, useGlobalFilter, useAsyncDebounce, useSortBy } from "react-table";
 import styled from "styled-components";
 
 // type Person = {
@@ -47,6 +47,34 @@ const Styles = styled.div`
   }
 `;
 
+// Define a default UI for filtering
+function GlobalFilter({ preGlobalFilteredRows, globalFilter, setGlobalFilter }) {
+  console.log(`🚀 ~ file: ReactTable.tsx ~ line 52 ~ GlobalFilter ~ preGlobalFilteredRows`, preGlobalFilteredRows);
+  const count = preGlobalFilteredRows.length;
+  const [value, setValue] = React.useState(globalFilter);
+  const onChange = useAsyncDebounce((value) => {
+    setGlobalFilter(value || undefined);
+  }, 200);
+
+  return (
+    <span>
+      Search:{" "}
+      <input
+        value={value || ""}
+        onChange={(e) => {
+          setValue(e.target.value);
+          onChange(e.target.value);
+        }}
+        placeholder={`${count} records...`}
+        style={{
+          fontSize: "1.1rem",
+          border: "0",
+        }}
+      />
+    </span>
+  );
+}
+
 export const ReactTable: React.FC<Props> = ({ data }) => {
   const tableData = useMemo(() => data, [data]);
 
@@ -84,9 +112,19 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
     [],
   );
 
-  const tableInstance = useTable({ columns, data: tableData }, useSortBy);
-
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = tableInstance;
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    rows,
+    prepareRow,
+    state,
+    visibleColumns,
+    // @ts-ignore
+    preGlobalFilteredRows,
+    // @ts-ignore
+    setGlobalFilter,
+  } = useTable({ columns, data: tableData }, useFilters, useGlobalFilter, useSortBy);
 
   return (
     <Styles>
@@ -106,6 +144,21 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
               })}
             </tr>
           ))}
+          <tr>
+            <th
+              colSpan={visibleColumns.length}
+              style={{
+                textAlign: "left",
+              }}
+            >
+              <GlobalFilter
+                preGlobalFilteredRows={preGlobalFilteredRows}
+                // @ts-ignore
+                globalFilter={state.globalFilter}
+                setGlobalFilter={setGlobalFilter}
+              />
+            </th>
+          </tr>
         </thead>
         {/* Apply the table body props */}
         <tbody {...getTableBodyProps()}>
