@@ -9,8 +9,10 @@ import { ReactTable } from "./ReactTable";
 // const queryClient = useQueryClient();
 
 export const ReactTableContainer = () => {
-  const { isLoading, error, data } = useQuery("fetchAllPeople", () =>
-    axios("https://my.api.mockaroo.com/my_saved_schema.json?key=b89539e0"),
+  const { isLoading, error, data } = useQuery(
+    "fetchAllPeople",
+    () => axios("https://my.api.mockaroo.com/my_saved_schema.json?key=b89539e0"),
+    { retry: false, refetchOnWindowFocus: false },
   );
 
   return (
