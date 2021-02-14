@@ -64,7 +64,6 @@ const Styles = styled.div`
 
 // Define a default UI for filtering
 function GlobalFilter({ preGlobalFilteredRows, globalFilter, setGlobalFilter }) {
-  console.log(`🚀 ~ file: ReactTable.tsx ~ line 52 ~ GlobalFilter ~ preGlobalFilteredRows`, preGlobalFilteredRows);
   const count = preGlobalFilteredRows.length;
   const [value, setValue] = React.useState(globalFilter);
   const onChange = useAsyncDebounce((value) => {
@@ -487,10 +486,20 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
           }
         </TableBody>
       </MaUTable>
-      {/* 
-        Pagination can be built however you'd like. 
-        This is just a very basic UI implementation:
-      */}
+      <pre>
+        <code>
+          {JSON.stringify({
+            // @ts-ignore
+            expanded: state.expanded,
+            // @ts-ignore
+            filters: state.filters,
+            // @ts-ignore
+            search: state.globalFilter,
+            // @ts-ignore
+            sortBy: state.sortBy,
+          })}
+        </code>
+      </pre>
     </Styles>
   );
 };
