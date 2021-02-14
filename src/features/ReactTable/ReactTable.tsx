@@ -2,6 +2,11 @@ import { matchSorter } from "match-sorter";
 import React, { useMemo } from "react";
 import { useTable, useFilters, useGlobalFilter, useAsyncDebounce, useSortBy } from "react-table";
 import styled from "styled-components";
+import MaUTable from "@material-ui/core/Table";
+import TableBody from "@material-ui/core/TableBody";
+import TableCell from "@material-ui/core/TableCell";
+import TableHead from "@material-ui/core/TableHead";
+import TableRow from "@material-ui/core/TableRow";
 
 // type Person = {
 //   address: { city: string; telephone: string };
@@ -323,14 +328,14 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
 
   return (
     <Styles>
-      <table {...getTableProps()}>
-        <thead>
+      <MaUTable {...getTableProps()}>
+        <TableHead>
           {headerGroups.map((headerGroup) => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
+            <TableRow {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map((column) => {
                 return (
                   <>
-                    <th {...column.getHeaderProps()}>
+                    <TableCell {...column.getHeaderProps()}>
                       {/* @ts-ignore */}
                       <div {...column.getSortByToggleProps()}>
                         {column.render("Header")}
@@ -339,14 +344,14 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
                       </div>
                       {/* @ts-ignore */}
                       <div>{column.canFilter ? column.render("Filter") : null}</div>
-                    </th>
+                    </TableCell>
                   </>
                 );
               })}
-            </tr>
+            </TableRow>
           ))}
-          <tr>
-            <th
+          <TableRow>
+            <TableCell
               colSpan={visibleColumns.length}
               style={{
                 textAlign: "left",
@@ -358,11 +363,11 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
                 globalFilter={state.globalFilter}
                 setGlobalFilter={setGlobalFilter}
               />
-            </th>
-          </tr>
-        </thead>
+            </TableCell>
+          </TableRow>
+        </TableHead>
         {/* Apply the table body props */}
-        <tbody {...getTableBodyProps()}>
+        <TableBody {...getTableBodyProps()}>
           {
             // Loop over the table rows
             rows.map((row) => {
@@ -370,27 +375,27 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
               prepareRow(row);
               return (
                 // Apply the row props
-                <tr {...row.getRowProps()}>
+                <TableRow {...row.getRowProps()}>
                   {
                     // Loop over the rows cells
                     row.cells.map((cell) => {
                       // Apply the cell props
                       return (
-                        <td {...cell.getCellProps()}>
+                        <TableCell {...cell.getCellProps()}>
                           {
                             // Render the cell contents
                             cell.render("Cell")
                           }
-                        </td>
+                        </TableCell>
                       );
                     })
                   }
-                </tr>
+                </TableRow>
               );
             })
           }
-        </tbody>
-      </table>
+        </TableBody>
+      </MaUTable>
     </Styles>
   );
 };
