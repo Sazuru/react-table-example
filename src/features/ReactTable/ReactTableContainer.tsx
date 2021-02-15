@@ -18,7 +18,7 @@ export const ReactTableContainer = () => {
   console.log(`🚀 ~ file: ReactTableContainer.tsx ~ line 13 ~ ReactTableContainer ~ data`, data);
   return (
     <div>
-      {error && <div>Something went wrong ...</div>}
+      {error && <div>Шото пошло не так ...</div>}
 
       {isLoading ? <div>Загружаем данные о пользователях ...</div> : <ReactTable data={data.data} />}
     </div>

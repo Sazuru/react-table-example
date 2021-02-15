@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { matchSorter } from "match-sorter";
 import React, { useMemo } from "react";
 import {
@@ -8,6 +9,7 @@ import {
   useSortBy,
   usePagination,
   useExpanded,
+  useRowSelect,
 } from "react-table";
 import styled from "styled-components";
 import MaUTable from "@material-ui/core/Table";
@@ -62,7 +64,6 @@ const Styles = styled.div`
   }
 `;
 
-// Define a default UI for filtering
 function GlobalFilter({ preGlobalFilteredRows, globalFilter, setGlobalFilter }) {
   const count = preGlobalFilteredRows.length;
   const [value, setValue] = React.useState(globalFilter);
@@ -89,7 +90,6 @@ function GlobalFilter({ preGlobalFilteredRows, globalFilter, setGlobalFilter }) 
   );
 }
 
-// Define a default UI for filtering
 function DefaultColumnFilter({ column: { filterValue, preFilteredRows, setFilter } }) {
   const count = preFilteredRows.length;
 
@@ -97,28 +97,23 @@ function DefaultColumnFilter({ column: { filterValue, preFilteredRows, setFilter
     <input
       value={filterValue || ""}
       onChange={(e) => {
-        setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
+        setFilter(e.target.value || undefined);
       }}
       placeholder={`Search ${count} records...`}
     />
   );
 }
 
-// This is a custom filter UI for selecting
-// a unique option from a list
 function SelectColumnFilter({ column: { filterValue, setFilter, preFilteredRows, id } }) {
-  // Calculate the options for filtering
-  // using the preFilteredRows
   const options = React.useMemo(() => {
     const options = new Set();
     preFilteredRows.forEach((row) => {
       options.add(row.values[id]);
     });
-    // @ts-ignore
+
     return [...options.values()];
   }, [id, preFilteredRows]);
 
-  // Render a multi-select box
   return (
     <select
       value={filterValue}
@@ -136,13 +131,7 @@ function SelectColumnFilter({ column: { filterValue, setFilter, preFilteredRows,
   );
 }
 
-// This is a custom filter UI that uses a
-// slider to set the filter value between a column's
-// min and max values
 function SliderColumnFilter({ column: { filterValue, setFilter, preFilteredRows, id } }) {
-  // Calculate the min and max
-  // using the preFilteredRows
-
   const [min, max] = React.useMemo(() => {
     let min = preFilteredRows.length ? preFilteredRows[0].values[id] : 0;
     let max = preFilteredRows.length ? preFilteredRows[0].values[id] : 0;
@@ -169,9 +158,6 @@ function SliderColumnFilter({ column: { filterValue, setFilter, preFilteredRows,
   );
 }
 
-// This is a custom UI for our 'between' or number range
-// filter. It uses two number boxes and filters rows to
-// ones that have values between the two
 function NumberRangeColumnFilter({ column: { filterValue = [], preFilteredRows, setFilter, id } }) {
   const [min, max] = React.useMemo(() => {
     let min = preFilteredRows.length ? preFilteredRows[0].values[id] : 0;
@@ -221,12 +207,25 @@ function NumberRangeColumnFilter({ column: { filterValue = [], preFilteredRows, 
 }
 
 function fuzzyTextFilterFn(rows, id, filterValue) {
-  // @ts-ignore
   return matchSorter(rows, filterValue, { keys: [(row) => row.values[id]] });
 }
 
-// Let the table remove the filter if the string is empty
 fuzzyTextFilterFn.autoRemove = (val) => !val;
+
+const IndeterminateCheckbox = React.forwardRef(({ indeterminate, ...rest }, ref) => {
+  const defaultRef = React.useRef();
+  const resolvedRef = ref || defaultRef;
+
+  React.useEffect(() => {
+    resolvedRef.current.indeterminate = indeterminate;
+  }, [resolvedRef, indeterminate]);
+
+  return (
+    <>
+      <input type='checkbox' ref={resolvedRef} {...rest} />
+    </>
+  );
+});
 
 export const ReactTable: React.FC<Props> = ({ data }) => {
   const tableData = useMemo(() => data, [data]);
@@ -234,21 +233,15 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
   const columns = useMemo(
     () => [
       {
-        // Build our expander column
-        id: "expander", // Make sure it has an ID
+        id: "expander",
         Header: ({ getToggleAllRowsExpandedProps, isAllRowsExpanded }) => (
           <span {...getToggleAllRowsExpandedProps()}>{isAllRowsExpanded ? "👇" : "👉"}</span>
         ),
         Cell: ({ row }) =>
-          // Use the row.canExpand and row.getToggleRowExpandedProps prop getter
-          // to build the toggle for expanding a row
           row.canExpand ? (
             <span
               {...row.getToggleRowExpandedProps({
                 style: {
-                  // We can even use the row.depth property
-                  // and paddingLeft to indicate the depth
-                  // of the row
                   paddingLeft: `${row.depth * 2}rem`,
                 },
               })}
@@ -264,13 +257,11 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
       {
         Header: "Имя",
         accessor: "first_name",
-        // Use our custom `fuzzyText` filter on this column
         filter: "fuzzyText",
       },
       {
         Header: "Фамилия",
         accessor: "last_name",
-        // Use our custom `fuzzyText` filter on this column
         filter: "fuzzyText",
       },
       {
@@ -301,10 +292,7 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
 
   const filterTypes = React.useMemo(
     () => ({
-      // Add a new fuzzyTextFilterFn filter type.
       fuzzyText: fuzzyTextFilterFn,
-      // Or, override the default text filter to use
-      // "startWith"
       text: (rows, id, filterValue) => {
         return rows.filter((row) => {
           const rowValue = row.values[id];
@@ -319,7 +307,6 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
 
   const defaultColumn = React.useMemo(
     () => ({
-      // Let's set up our default Filter UI
       Filter: DefaultColumnFilter,
     }),
     [],
@@ -332,34 +319,23 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
     prepareRow,
     state,
     visibleColumns,
-    // @ts-ignore
     preGlobalFilteredRows,
-    // @ts-ignore
     setGlobalFilter,
-    // @ts-ignore
     page,
-    // @ts-ignore
     canPreviousPage,
-    // @ts-ignore
     canNextPage,
-    // @ts-ignore
     pageOptions,
-    // @ts-ignore
     pageCount,
-    // @ts-ignore
     gotoPage,
-    // @ts-ignore
     nextPage,
-    // @ts-ignore
     previousPage,
-    // @ts-ignore
     setPageSize,
+    selectedFlatRows,
   } = useTable(
     {
       columns,
       data: tableData,
-      // @ts-ignore
-      defaultColumn, // Be sure to pass the defaultColumn option
+      defaultColumn,
       filterTypes,
     },
     useFilters,
@@ -367,10 +343,31 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
     useSortBy,
     useExpanded,
     usePagination,
+    useRowSelect,
+    (hooks) => {
+      hooks.visibleColumns.push((columns) => [
+        {
+          id: "selection",
+          Header: ({ getToggleAllPageRowsSelectedProps }) => (
+            <div>
+              <IndeterminateCheckbox {...getToggleAllPageRowsSelectedProps()} />
+            </div>
+          ),
+          Cell: ({ row }) => (
+            <div>
+              <IndeterminateCheckbox {...row.getToggleRowSelectedProps()} />
+            </div>
+          ),
+        },
+        ...columns,
+      ]);
+    },
   );
+  console.log(`🚀 ~ file: ReactTable.tsx ~ line 376 ~ state`, state);
 
   return (
     <Styles>
+      <div>Выбрано: {selectedFlatRows?.length}</div>
       <div className='pagination' style={{ marginBottom: "16px" }}>
         <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
           {"<<"}
@@ -387,7 +384,6 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
         <span>
           Page{" "}
           <strong>
-            {/* @ts-ignore */}
             {state.pageIndex + 1} of {pageOptions.length}
           </strong>{" "}
         </span>
@@ -395,7 +391,6 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
           | Go to page:{" "}
           <input
             type='number'
-            // @ts-ignore
             defaultValue={state.pageIndex + 1}
             onChange={(e) => {
               const page = e.target.value ? Number(e.target.value) - 1 : 0;
@@ -405,7 +400,6 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
           />
         </span>{" "}
         <select
-          // @ts-ignore
           value={state.pageSize}
           onChange={(e) => {
             setPageSize(Number(e.target.value));
@@ -426,13 +420,10 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
                 return (
                   <>
                     <TableCell {...column.getHeaderProps()}>
-                      {/* @ts-ignore */}
                       <div {...column.getSortByToggleProps()}>
                         {column.render("Header")}
-                        {/* @ts-ignore */}
                         {column.isSorted ? (column.isSortedDesc ? " 🔽" : " 🔼") : ""}
                       </div>
-                      {/* @ts-ignore */}
                       <div>{column.canFilter ? column.render("Filter") : null}</div>
                     </TableCell>
                   </>
@@ -449,54 +440,33 @@ export const ReactTable: React.FC<Props> = ({ data }) => {
             >
               <GlobalFilter
                 preGlobalFilteredRows={preGlobalFilteredRows}
-                // @ts-ignore
                 globalFilter={state.globalFilter}
                 setGlobalFilter={setGlobalFilter}
               />
             </TableCell>
           </TableRow>
         </TableHead>
-        {/* Apply the table body props */}
         <TableBody {...getTableBodyProps()}>
-          {
-            // Loop over the table rows
-            page.map((row) => {
-              // Prepare the row for display
-              prepareRow(row);
-              return (
-                // Apply the row props
-                <TableRow {...row.getRowProps()}>
-                  {
-                    // Loop over the rows cells
-                    row.cells.map((cell) => {
-                      // Apply the cell props
-                      return (
-                        <TableCell {...cell.getCellProps()}>
-                          {
-                            // Render the cell contents
-                            cell.render("Cell")
-                          }
-                        </TableCell>
-                      );
-                    })
-                  }
-                </TableRow>
-              );
-            })
-          }
+          {page.map((row) => {
+            prepareRow(row);
+            return (
+              <TableRow {...row.getRowProps()}>
+                {row.cells.map((cell) => {
+                  return <TableCell {...cell.getCellProps()}>{cell.render("Cell")}</TableCell>;
+                })}
+              </TableRow>
+            );
+          })}
         </TableBody>
       </MaUTable>
       <pre>
         <code>
           {JSON.stringify({
-            // @ts-ignore
             expanded: state.expanded,
-            // @ts-ignore
             filters: state.filters,
-            // @ts-ignore
             search: state.globalFilter,
-            // @ts-ignore
             sortBy: state.sortBy,
+            selectedRowIds: state.selectedRowIds,
           })}
         </code>
       </pre>
